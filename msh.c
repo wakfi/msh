@@ -63,7 +63,7 @@ void addtohistory(char inputBuffer[])
 
 	
 	// update array"history": add the command to history, strcpy(str1,str2);
-	strcpy(inputBuffer, 
+	//strcpy(inputBuffer, 
 	// update array"display_history": remove characters like '\n', '\0' in order to display nicely
  
 
@@ -182,6 +182,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 				//fill in your code here, set up args
 			case '&':
 				*background = 1;
+				inputBuffer[i] = '\0';
 				break;
 	    	default :             /* some other character */
 				 //fill in your code here, 
@@ -197,7 +198,12 @@ int setup(char inputBuffer[], char *args[],int *background)
 	 * Here you finish parsing the input. 
 	 * There is one more thing to assure. If we get '&', make sure you don't enter it in the args array
 	 */
-	
+	if(length == MAX_LINE)
+	{
+		args[argsIndex] = NULL;
+		argsIndex++;
+		*(inputBuffer+length) = '\0';
+	}
 
 	return 1;
 	
