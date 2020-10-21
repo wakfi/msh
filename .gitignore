@@ -1,4 +1,5 @@
 *.pdf
+msh
 
 ## C .gitignore
 # Prerequisites
