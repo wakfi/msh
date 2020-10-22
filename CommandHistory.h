@@ -37,7 +37,7 @@ void deleteCommandHistory(CommandHistory* history)
 
 CommandMemory* insertMemory(char* command, char** args, int background, CommandHistory* history)
 {
-	fprintf(stderr, "new memory from %s\n", args[0]);
+	//fprintf(stderr, "new memory from %s\n", args[0]);
 	CommandMemory* memory = newCommandMemory(command, args, background);
 	if(history->tail)
 	{
@@ -59,8 +59,8 @@ CommandMemory* insertMemory(char* command, char** args, int background, CommandH
 		//fprintf(stderr, "d\n");
 		history->size++;
 	}
-	fprintf(stderr, "head is now %s\n", history->head->args[0]);
-	fprintf(stderr, "tail is now %s\n", history->tail->args[0]);
+	//fprintf(stderr, "head is now %s\n", history->head->args[0]);
+	//fprintf(stderr, "tail is now %s\n", history->tail->args[0]);
 	return memory;
 }
 

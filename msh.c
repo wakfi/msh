@@ -88,7 +88,7 @@ void addtohistory(char inputBuffer[], char** args)
 {
 	// update array"history": add the command to history, strcpy(str1,str2);
 	insertMemory(inputBuffer, args, background, history);
-	fprintf(stderr, "added %s to history\n", history->tail->command);
+	//fprintf(stderr, "added %s to history\n", history->tail->command);
 	// update array"display_history": remove characters like '\n', '\0' in order to display nicely
 	/*CommandMemory* displayTail = insertMemory(inputBuffer, displayHistory);
 	char* command = displayTail->command;
@@ -198,37 +198,42 @@ int setup(char inputBuffer[], char *args[],int *background)
 	
 	if(startsWith(inputBuffer, "!")) 
 	{
-		if(!strcmp(inputBuffer+1, "!\n"))
+		if(startsWith(inputBuffer+1, "!\n"))
 		{
-			printf("!!\n");
-			if(!history->head)
+			//printf("!!\n");
+			if(!history->tail)
 			{
 				fprintf(stderr, "!!: No commands in history\n");
 				return 1;
 			}
 			int count = 0;
-			while(*(history->head->args+count))
+			while(*(history->tail->args+count))
 			{
-				args[count] = history->head->args[count];
+				args[count] = history->tail->args[count];
 				count++;
 			}
 			args[count] = NULL;
-			*background = history->head->background;
-			printf("!!: %s\n", history->head->command);
-			addtohistory(history->head->command, args);
+			*background = history->tail->background;
+			printf("!!: %s\n", history->tail->command);
+			addtohistory(history->tail->command, args);
 			return 1;
 		} else if(isdigit(inputBuffer[1])) {
 			int j = 0;
 			while(isdigit(*(inputBuffer+(++j)))){}
 			*(inputBuffer+j) = '\0';
 			int commandIndex = atoi(inputBuffer+1)-1;
+			if(commandIndex >= history->size)
+			{
+				fprintf(stderr, "!%d: No such command in history\n", commandIndex+1);
+				return 1;
+			}
 			CommandMemory* item = memoryAt(commandIndex, history);
 			if(item)
 			{
 				int count = 0;
 				while(*(item->args+count))
 				{
-					fprintf(stderr, "changing '%s' to '%s'\n", args[count], item->args[count]);
+					//fprintf(stderr, "changing '%s' to '%s'\n", args[count], item->args[count]);
 					args[count] = item->args[count];
 					count++;
 				}
@@ -241,7 +246,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 			}
 			return 1;
 		} else {
-			printf("bad !\n");
+			fprintf(stderr, "bad !\n");
 		}
 	}
 	
@@ -347,9 +352,9 @@ int main(void)
 		*/
 		//printStrings(args);
 		char*mshe[]={"./msh","-e",NULL};
-		if(startsWith(inputBuffer, "history") && (inputBuffer[7] == ' ' || inputBuffer[7] == '\n' || inputBuffer[7] == '\0' || inputBuffer[7] == '\t'))
+		if(args[0] && !strcmp(args[0],"history"))
 		{
-			if(!strcmp(inputBuffer, "history\0"))
+			if(!args[1])
 			{
 				printHistory(history);
 			} else {
@@ -380,7 +385,7 @@ int main(void)
 			
 			if((child = fork()) == 0)
 			{
-				printf("hi i'm running your stuff\n");
+				//printf("hi i'm running your stuff\n");
 				execvp(args[0], args);
 				if(startsWith(args[0], "./"))
 				{
@@ -392,7 +397,7 @@ int main(void)
 			}
 			if(child < 0)
 			{
-				perror("error in fork");
+				perror("fork");
 				exit(-1);
 			}
 			if(!background)

@@ -88,6 +88,7 @@ void deleteCommandMemory(CommandMemory* memory)
 		count++;
 	}
 	free(memory->args);
+	free(memory->command);
 	free(memory);
 }
 
