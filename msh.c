@@ -11,21 +11,28 @@
 #include <sys/types.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <ctype.h>
+#include "CommandHistory.h"
 
 
 #define MAX_LINE		80 /* 80 chars per line, per command, should be enough. */
 #define MAX_COMMANDS	9 /* size of history */
 
-char history[MAX_COMMANDS][MAX_LINE]; //the array used to store history commands.
-char display_history [MAX_COMMANDS][MAX_LINE]; 
+//char history[MAX_COMMANDS][MAX_LINE]; //the array used to store history commands.
+//char display_history [MAX_COMMANDS][MAX_LINE]; 
+CommandHistory* history;
+//CommandHistory* displayHistory;
+
 /*the array used for "printf" to display history nicely. Remove special characters like "\n" or "\0"*/
-int hist_len = 0;
+//int hist_len = 0;
 
 int command_count = 0;
+int background;             	/* equals 1 if a command is followed by '&' */
 
 /**
  * Add the most recent command to the history.
  */
+
  
 void printBuffer(char* args[])
 {
@@ -45,7 +52,7 @@ void printBuffer(char* args[])
 	}
 	fprintf(stderr, "\n");
 }
- 
+
 void printStrings(char* args[])
 {
 	char** curr = args;
@@ -57,16 +64,49 @@ void printStrings(char* args[])
 	}
 	printf("\n");
 }
-
-void addtohistory(char inputBuffer[]) 
-{
-
-	
-	// update array"history": add the command to history, strcpy(str1,str2);
-	//strcpy(inputBuffer, 
-	// update array"display_history": remove characters like '\n', '\0' in order to display nicely
  
+int argscmp(char** args1, char** args2)
+{
+	int i = 0;
+	int result=0;
+	while(*(args1+i) && *(args2+i))
+	{
+		if((result=strcmp(*(args1+i), *(args2+i))))
+		{
+			return result;
+		}
+		i++;
+	}
+	if(*(args1+i) || *(args2+i))
+	{
+		return 1;
+	}
+	return 0;
+}
 
+void addtohistory(char inputBuffer[], char** args) 
+{
+	// update array"history": add the command to history, strcpy(str1,str2);
+	insertMemory(inputBuffer, args, background, history);
+	// update array"display_history": remove characters like '\n', '\0' in order to display nicely
+	/*CommandMemory* displayTail = insertMemory(inputBuffer, displayHistory);
+	char* command = displayTail->command;
+	int i;
+	int length = sizeof(inputBuffer)/sizeof(inputBuffer[0]);
+	for(i = 0; i < length; i++)
+	{
+		switch(*(command+i))
+		{
+			case '\0':
+				*(command+i) = ' ';
+				break;
+			case '\n': 
+				*(command+i) = '\0';
+				break;
+			default:
+				break;
+		}
+	}*/
 	return;
 }
 
@@ -117,6 +157,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 
     if (length == 0)
 	{
+		printf("\n");
         exit(0);            /* ^d was entered, end of user command stream */
 	}
  
@@ -133,11 +174,13 @@ int setup(char inputBuffer[], char *args[],int *background)
 	// fill in your code here Part II, if the user input is to repeat some history commands
 	if (inputBuffer[0] == '!') 
 	{
-		if(length < 2)
+		/* 	
+		if(length < 3)
 		{
-			perror("command syntax error");
+			fprintf(stderr, "command syntax error\n");
 			return 0;
-		}
+		} 
+		*/
 	}
 	
 
@@ -145,7 +188,54 @@ int setup(char inputBuffer[], char *args[],int *background)
 	 * Add the command to the history
 	 */
 	 // fill in your code here Part II, add the following line for PartII
-	// addtohistory(inputBuffer); 
+	//addtohistory(inputBuffer); 
+	
+	if(startsWith(inputBuffer, "!")) 
+	{
+		if(!strcmp(inputBuffer+1, "!\n"))
+		{
+			printf("!!\n");
+			if(!history->head)
+			{
+				fprintf(stderr, "!!: No commands in history\n");
+				return 1;
+			}
+			int count = 0;
+			while(*(history->head->args+count))
+			{
+				args[count] = history->head->args[count];
+				count++;
+			}
+			args[count] = NULL;
+			*background = history->head->background;
+			printf("!!: %s\n", history->head->command);
+			return 1;
+		} else if(isdigit(inputBuffer[1])) {
+			int j = 0;
+			while(isdigit(*(inputBuffer+(++j)))){}
+			*(inputBuffer+j) = '\0';
+			int commandIndex = atoi(inputBuffer+1)-1;
+			CommandMemory* item = memoryAt(commandIndex, history);
+			if(item)
+			{
+				int count = 0;
+				while(*(item->args+count))
+				{
+					fprintf(stderr, "changing '%s' to '%s'\n", args[count], item->args[count]);
+					args[count] = item->args[count];
+					count++;
+				}
+				args[count] = NULL;
+				*background = item->background;
+				printf("!%d: %s\n", commandIndex+1, item->command);
+			} else {
+				fprintf(stderr, "!%d: No such command in history\n", commandIndex+1);
+			}
+			return 1;
+		} else {
+			printf("bad !\n");
+		}
+	}
 	
 	/**
 	 * Parse the contents of inputBuffer
@@ -154,13 +244,14 @@ int setup(char inputBuffer[], char *args[],int *background)
     for (i=0;i<length;i++)
 	{ 
 		/* examine every character in the inputBuffer */
-		
+		//fprintf(stderr, "%s", inputBuffer+i);
         switch (inputBuffer[i])
 		{
 			case '\n':  /* should be the final char examined */
+				inputBuffer[i] = '\0';
+				//fprintf(stderr, "(argsIndex: %d) %p contains %s\n", argsIndex-1, args[argsIndex-1], args[argsIndex-1]);
 				args[argsIndex] = NULL;
 				argsIndex++;
-				inputBuffer[i] = '\0';
 				break;
 				/* no more arguments to this command */	
 			case ' ':
@@ -168,10 +259,12 @@ int setup(char inputBuffer[], char *args[],int *background)
 				inputBuffer[i] = '\0';
 				if(++i < length)
 				{
+					//fprintf(stderr, "(argsIndex: %d) %p contains %s\n", argsIndex-1, args[argsIndex-1], args[argsIndex-1]);
 					if(inputBuffer[i] != '\n')
 					{
 						args[argsIndex] = inputBuffer + i;
 						argsIndex++;
+						//fprintf(stderr, "%p contains %s\n", args[argsIndex-1], args[argsIndex-1]);
 					} else {
 						args[argsIndex] = NULL;
 						argsIndex++;
@@ -204,7 +297,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 		argsIndex++;
 		*(inputBuffer+length) = '\0';
 	}
-
+	addtohistory(inputBuffer, args);
 	return 1;
 	
 } /* end of setup routine */
@@ -213,9 +306,10 @@ int setup(char inputBuffer[], char *args[],int *background)
 int main(void)
 {
 	char inputBuffer[MAX_LINE]; 	/* buffer to hold the command entered */
-	int background;             	/* equals 1 if a command is followed by '&' */
 	char *args[MAX_LINE/2 + 1];		/* command line (of 80) has max of 40 arguments */
 	pid_t child;            		/* process id of the child process */
+	history = newCommandHistory(MAX_COMMANDS);
+	//displayHistory = newCommandHistory(MAX_COMMANDS);
 	
 	//define your local variables here, at the beginning of your program. 
 
@@ -241,14 +335,34 @@ int main(void)
 		*/
 		
 		/*
-		if (input[0] == 'h' && input[1] == 'i' && input[2] == 's' && input[3] == 't' && input[4] == '
+
 		*/
 		//printStrings(args);
+		char*mshe[]={"./msh","-e",NULL};
 		if(startsWith(inputBuffer, "history") && (inputBuffer[7] == ' ' || inputBuffer[7] == '\n' || inputBuffer[7] == '\0' || inputBuffer[7] == '\t'))
 		{
-			printf("history stuff\n");
-			//history stuff
-		} else if (shouldrun) {
+			if(!strcmp(inputBuffer, "history\0"))
+			{
+				printHistory(history);
+			} else {
+				if((child = fork()) == 0)
+				{
+					execvp(args[0], args);
+					perror(args[0]);
+				}
+				if(!background)
+				{
+					int status;
+					waitpid(child, &status, 0);
+				}
+			}
+			
+		} else if(!argscmp(args, mshe)) {
+			deleteCommandHistory(history);
+			args[1] = NULL;
+			execvp(args[0], args);
+			perror(args[0]);
+		} else if(shouldrun) {
 			/* creates a duplicate process! */
 			//here fill in your code
 			/* pid < 0  error
@@ -258,6 +372,7 @@ int main(void)
 			
 			if((child = fork()) == 0)
 			{
+				printf("hi i'm running your stuff\n");
 				execvp(args[0], args);
 				if(startsWith(args[0], "./"))
 				{
@@ -279,9 +394,9 @@ int main(void)
 			} else {
 				background = 0;
 			}
+			//printStrings(history->head->args);
 		}
     }
-	
 	return 0;
 }
 
