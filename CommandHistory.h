@@ -37,30 +37,23 @@ void deleteCommandHistory(CommandHistory* history)
 
 CommandMemory* insertMemory(char* command, char** args, int background, CommandHistory* history)
 {
-	//fprintf(stderr, "new memory from %s\n", args[0]);
 	CommandMemory* memory = newCommandMemory(command, args, background);
 	if(history->tail)
 	{
-		//fprintf(stderr, "a\n");
 		history->tail->next = memory;
 		history->tail = history->tail->next;
 	} else {
-		//fprintf(stderr, "b\n");
 		history->head = memory;
 		history->tail = memory;
 	}
 	if(history->size == history->limit)
 	{
-		//fprintf(stderr, "c\n");
 		CommandMemory* tmp = history->head;
 		history->head = history->head->next;
 		free(tmp);
 	} else {
-		//fprintf(stderr, "d\n");
 		history->size++;
 	}
-	//fprintf(stderr, "head is now %s\n", history->head->args[0]);
-	//fprintf(stderr, "tail is now %s\n", history->tail->args[0]);
 	return memory;
 }
 
@@ -75,13 +68,11 @@ CommandMemory* memoryAt(int index, CommandHistory* history)
 	return ptr;
 }
 
-
 void printHistory(CommandHistory* history)
 {
 	CommandMemory* curr = history->head;
 	char* output[history->size];
 	int i=0;
-	//for(i = 0; i < history->size; i++)
 	while(curr)
 	{
 		output[i++] = curr->command;
