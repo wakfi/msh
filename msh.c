@@ -88,6 +88,7 @@ void addtohistory(char inputBuffer[], char** args)
 {
 	// update array"history": add the command to history, strcpy(str1,str2);
 	insertMemory(inputBuffer, args, background, history);
+	fprintf(stderr, "added %s to history\n", history->tail->command);
 	// update array"display_history": remove characters like '\n', '\0' in order to display nicely
 	/*CommandMemory* displayTail = insertMemory(inputBuffer, displayHistory);
 	char* command = displayTail->command;
@@ -183,6 +184,11 @@ int setup(char inputBuffer[], char *args[],int *background)
 		*/
 	}
 	
+	char cmd[80];
+	strcpy(cmd, inputBuffer);
+	char* pt = cmd;
+	while(*pt != '\n') {pt++;}
+	*pt = '\0';
 
 	/**
 	 * Add the command to the history
@@ -209,6 +215,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 			args[count] = NULL;
 			*background = history->head->background;
 			printf("!!: %s\n", history->head->command);
+			addtohistory(history->head->command, args);
 			return 1;
 		} else if(isdigit(inputBuffer[1])) {
 			int j = 0;
@@ -228,6 +235,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 				args[count] = NULL;
 				*background = item->background;
 				printf("!%d: %s\n", commandIndex+1, item->command);
+				addtohistory(item->command, args);
 			} else {
 				fprintf(stderr, "!%d: No such command in history\n", commandIndex+1);
 			}
@@ -297,7 +305,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 		argsIndex++;
 		*(inputBuffer+length) = '\0';
 	}
-	addtohistory(inputBuffer, args);
+	addtohistory(cmd, args);
 	return 1;
 	
 } /* end of setup routine */

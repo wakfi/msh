@@ -79,17 +79,17 @@ CommandMemory* memoryAt(int index, CommandHistory* history)
 void printHistory(CommandHistory* history)
 {
 	CommandMemory* curr = history->head;
-	char** output[history->size] ;
+	char* output[history->size];
 	int i=0;
 	//for(i = 0; i < history->size; i++)
 	while(curr)
 	{
-		output[++i] = curr->args;
+		output[i++] = curr->command;
 		curr = curr->next;
 	}
-	for(i = history->size - 1; i > 0; i--)
+	for(i = history->size - 1; i >= 0; i--)
 	{
-		printf("%d. %s\n", i, *output[i]);
+		printf("%d. %s\n", i+1, output[i]);
 	}
 }
 

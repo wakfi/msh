@@ -56,7 +56,7 @@ int __arrsize(char* arr)
 CommandMemory* newCommandMemory(char* command, char** args, int background)
 {
 	CommandMemory* tmp = malloc(sizeof(CommandMemory));
-	tmp->command = malloc(sizeof(command));
+	tmp->command = malloc(__arrsize(command));
 	strcpy(tmp->command, command);
 	tmp->args = malloc(__arrsize((char*)args)*8);
 	int count = 0;
