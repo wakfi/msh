@@ -2,6 +2,8 @@
  * msh.c
  * Author: Walker Gray
  * Derivative of simple-shell.c
+ * CPSC 346
+ * Project 3
  */
 
 #include <stdio.h>
@@ -143,7 +145,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 	i,				/* loop index for accessing inputBuffer array */
 	command_number;	/* index of requested command number */
 
-	//define your local varialbes here;
+	//define your local variables here;
 	
 	int argsIndex = 1;
 	
@@ -288,7 +290,8 @@ int main(void)
 
 	int shouldrun = 1;
 	
-
+	//changed shouldrun to dictate whether forking and exec should occur since exiting
+	//occurs in setup func
     while (1)
 	{            		/* Program terminates normally inside setup */
 		background = 0;
@@ -324,6 +327,7 @@ int main(void)
 		} else if(!strcmp(args[0], "exit")) {
 			exit(0);
 		} else if(!argscmp(args, mshe)) {
+			//command to allow hot swapping shell program after recompiling
 			args[1] = NULL;
 			execvp(args[0], args);
 			perror(args[0]);
