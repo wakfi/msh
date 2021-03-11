@@ -141,15 +141,13 @@ void addtohistory(char inputBuffer[])
 
 int setup(char inputBuffer[], char *args[],int *background)
 {
-    int length,		/* # of characters in the command line */
-	i,				/* loop index for accessing inputBuffer array */
-	command_number;	/* index of requested command number */
-
-	//define your local variables here;
-	
+	//define local variables
+	int length,     /* # of characters in the command line */
+	i,              /* loop index for accessing inputBuffer array */
+	command_number; /* index of requested command number */
 	int argsIndex = 1;
-	
-    /* read what the user enters on the command line */
+
+	/* read what the user enters on the command line */
 	do 
 	{
 		printf("msh> ");
@@ -159,22 +157,17 @@ int setup(char inputBuffer[], char *args[],int *background)
 	while(inputBuffer[0] == '\n' && length == 1); /* swallow newline characters */
 
 
-    if (length == 0)
+	if (length == 0)
 	{
-        exit(0);            /* ^d was entered, end of user command stream */
+		exit(0); /* ^d (EOF) was entered, end of user command stream */
 	}
- 
-    if (length < 0) 
+
+	if (length < 0) 
 	{
 		perror("error reading the command");
-		exit(-1);           /* terminate with error code of -1 */
-    }
-	
-	/**
-	 * Check if they are using history
-	 */
-	
-	// fill in your code here Part II, if the user input is to repeat some history commands
+		exit(-1); /* terminate with error code of -1 */
+	}
+	 
 	if (inputBuffer[0] == '!' && length == 3) 
 	{
 		if(!command_count)
@@ -205,16 +198,16 @@ int setup(char inputBuffer[], char *args[],int *background)
 		length = j;
 		printf("!%d: %s\n", command_number, display_history[command_number-1]);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Add the command to the history
 	 */
 	// fill in your code here Part II, add the following line for PartII
 	addtohistory(inputBuffer); 
-	
-	//trim leading whitespace
+
+	// trim leading whitespace
 	for (i=0; i<length; i++)
 	{
 		if(inputBuffer[i] != ' ' && inputBuffer[i] != '\t' && inputBuffer[i] != '\n')
@@ -222,15 +215,15 @@ int setup(char inputBuffer[], char *args[],int *background)
 			break;
 		}
 	}
-	
+
 	/**
 	 * Parse the contents of inputBuffer
 	 */
-	
-    args[0] = inputBuffer + (i++);
-    for (;i<length;i++)
+
+	args[0] = inputBuffer + (i++);
+	for (;i<length;i++)
 	{ 
-        switch (inputBuffer[i])
+		switch (inputBuffer[i])
 		{
 			case ' ':
 			case '\t' : /* argument separators */
@@ -250,7 +243,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 					}
 				}
 				break;
-			case '\n':  /* should be the final char examined */
+			case '\n': /* should be the final char examined */
 				inputBuffer[i] = '\0';
 				args[argsIndex] = NULL;
 				argsIndex++;
@@ -260,14 +253,9 @@ int setup(char inputBuffer[], char *args[],int *background)
 				*background = 1;
 				inputBuffer[i] = '\0';
 				break;
-		} /* end of switch */
-	}    /* end of for */
-	
-	/**
-	 * Here you finish parsing the input. 
-	 * There is one more thing to assure. If we get '&', make sure you don't enter it in the args array
-	 */
-	
+		}
+	}
+
 	if(length == MAX_LINE)
 	{
 		args[argsIndex] = NULL;
@@ -276,42 +264,28 @@ int setup(char inputBuffer[], char *args[],int *background)
 	}
 
 	return 1;
-} /* end of setup routine */
+}
 
 
 int main(void)
 {
-	char inputBuffer[MAX_LINE]; 	/* buffer to hold the command entered */
-	int background;             	/* equals 1 if a command is followed by '&' */
-	char *args[MAX_LINE/2 + 1];	/* command line (of 80) has max of 40 arguments */
-	pid_t child;            		/* process id of the child process */
-	
-	//define your local variables here, at the beginning of your program. 
-
+	//define local variables
+	char inputBuffer[MAX_LINE]; /* buffer to hold the command entered */
+	int background;             /* equals 1 if a command is followed by '&' */
+	char *args[MAX_LINE/2 + 1]; /* command line (of 80) has max of 40 arguments */
+	pid_t child;                /* process id of the child process */
 	int shouldrun = 1;
-	
-	//changed shouldrun to dictate whether forking and exec should occur since exiting
+	//changing shouldrun to dictate whether forking and exec should occur since exiting
 	//occurs in setup func
-    while (1)
-	{            		/* Program terminates normally inside setup */
+
+
+	while (1) /* Program terminates normally inside setup */
+	{
 		background = 0;
-		
-		shouldrun = setup(inputBuffer,args,&background);       /* get next command */
-		
-		// fill in your code here Part I
-		/* if the user typed in "exit", the shell program will return (or terminate). 
-		* Call strncmp(str1,str1,count). The function call will return 0 if str1 == str2.
-		* "count" is the number of characters we use to compare.    
-		*/		
-		
-		// fill in your code here Part II
-		/* if the user typed in "history", the shell program will display the history commands. 
-		* you will use "printf" to print the display_history
-		* after you display all the array, this command is done. 
-		* Your program should go to read again, which means calling the "setup" function.  
-		*/
-		
-	
+
+		shouldrun = setup(inputBuffer,args,&background); /* get next command */
+
+
 		char*mshe[]={"./msh","-e",NULL};
 		if(args[0] && !strcmp(args[0], "history"))
 		{
@@ -327,7 +301,7 @@ int main(void)
 		} else if(!strcmp(args[0], "exit")) {
 			exit(0);
 		} else if(!argscmp(args, mshe)) {
-			//command to allow hot swapping shell program after recompiling
+			//command to allow hot-swapping shell program after recompiling
 			args[1] = NULL;
 			execvp(args[0], args);
 			perror(args[0]);
@@ -356,8 +330,7 @@ int main(void)
 				background = 0;
 			}
 		}
-    }
-	
+	}
+
 	return 0;
 }
-
